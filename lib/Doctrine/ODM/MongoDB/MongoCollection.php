@@ -256,7 +256,7 @@ class MongoCollection
     }
 
     /** @override */
-    public function update(array $criteria, array $newObj, array $options = array())
+    public function update($criteria, array $newObj, array $options = array())
     {
         if ($this->eventManager->hasListeners(CollectionEvents::preUpdate)) {
             $this->eventManager->dispatchEvent(CollectionEvents::preUpdate, new CollectionUpdateEventArgs($this, $criteria, $newObj, $options));

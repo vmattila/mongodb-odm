@@ -197,7 +197,7 @@ class PersistentCollection implements Collection
      * @param object $document
      * @param AssociationMapping $mapping
      */
-    public function setOwner($document, array $mapping)
+    public function setOwner($document, $mapping)
     {
         $this->owner = $document;
         $this->mapping = $mapping;
@@ -312,8 +312,8 @@ class PersistentCollection implements Collection
         $removed = $this->coll->remove($key);
         if ($removed) {
             $this->changed();
-            if ($this->mapping !== null && isset($this->mapping['embedded'])) {
-                $this->dm->getUnitOfWork()->scheduleEmbeddedRemoval($removed);
+            if ($this->mapping !== null && isset($this->mapping['embedded']) && $this->mapping['orphanRemoval']) {
+                $this->dm->getUnitOfWork()->scheduleOrphanRemoval($removed);
             }
         }
 
@@ -329,8 +329,8 @@ class PersistentCollection implements Collection
         $removed = $this->coll->removeElement($element);
         if ($removed) {
             $this->changed();
-            if ($this->mapping !== null && isset($this->mapping['embedded'])) {
-                $this->dm->getUnitOfWork()->scheduleEmbeddedRemoval($element);
+            if ($this->mapping !== null && isset($this->mapping['embedded']) && $this->mapping['orphanRemoval']) {
+                $this->dm->getUnitOfWork()->scheduleOrphanRemoval($element);
             }
         }
         return $removed;
@@ -496,13 +496,14 @@ class PersistentCollection implements Collection
         if ($this->initialized && $this->isEmpty()) {
             return;
         }
-        if ($this->mapping !== null && isset($this->mapping['embedded'])) {
+        if ($this->mapping !== null && isset($this->mapping['embedded']) && $this->mapping['orphanRemoval']) {
             foreach ($this->coll as $element) {
-                $this->dm->getUnitOfWork()->scheduleEmbeddedRemoval($element);
+                $this->dm->getUnitOfWork()->scheduleOrphanRemoval($element);
             }
         }
         $this->coll->clear();
         $this->changed();
+        $this->dm->getUnitOfWork()->scheduleCollectionDeletion($this);
         $this->takeSnapshot();
     }
 

@@ -41,7 +41,8 @@ abstract class AbstractDriverTest extends \PHPUnit_Framework_TestCase
             'isCascadePersist' => false,
             'isCascadeRefresh' => false,
             'isCascadeRemove' => false,
-            'nullable' => false
+            'nullable' => false,
+            'orphanRemoval' => false
         ), $classMetadata->fieldMappings['id']);
 
         $this->assertEquals(array(
@@ -54,7 +55,8 @@ abstract class AbstractDriverTest extends \PHPUnit_Framework_TestCase
             'isCascadePersist' => false,
             'isCascadeRefresh' => false,
             'isCascadeRemove' => false,
-            'nullable' => false
+            'nullable' => false,
+            'orphanRemoval' => false
         ), $classMetadata->fieldMappings['username']);
 
         $this->assertEquals(array(
@@ -67,7 +69,8 @@ abstract class AbstractDriverTest extends \PHPUnit_Framework_TestCase
             'isCascadePersist' => false,
             'isCascadeRefresh' => false,
             'isCascadeRemove' => false,
-            'nullable' => false
+            'nullable' => false,
+            'orphanRemoval' => false
         ), $classMetadata->fieldMappings['createdAt']);
 
         $this->assertEquals(array(
@@ -81,6 +84,7 @@ abstract class AbstractDriverTest extends \PHPUnit_Framework_TestCase
             'isCascadeRefresh' => false,
             'isCascadeRemove' => false,
             'nullable' => false,
+            'orphanRemoval' => false,
             'strategy' => 'pushPull',
         ), $classMetadata->fieldMappings['tags']);
 
@@ -97,6 +101,7 @@ abstract class AbstractDriverTest extends \PHPUnit_Framework_TestCase
             'isCascadeRefresh' => false,
             'isCascadeRemove' => false,
             'nullable' => false,
+            'orphanRemoval' => false,
             'strategy' => 'pushPull',
         ), $classMetadata->fieldMappings['address']);
 
@@ -113,6 +118,7 @@ abstract class AbstractDriverTest extends \PHPUnit_Framework_TestCase
             'isCascadeRefresh' => false,
             'isCascadeRemove' => false,
             'nullable' => false,
+            'orphanRemoval' => true,
             'strategy' => 'pushPull',
         ), $classMetadata->fieldMappings['phonenumbers']);
 
@@ -129,6 +135,7 @@ abstract class AbstractDriverTest extends \PHPUnit_Framework_TestCase
             'isCascadeRefresh' => true,
             'isCascadeRemove' => true,
             'nullable' => false,
+            'orphanRemoval' => false,
             'strategy' => 'pushPull',
         ), $classMetadata->fieldMappings['profile']);
 
@@ -145,6 +152,7 @@ abstract class AbstractDriverTest extends \PHPUnit_Framework_TestCase
             'isCascadeRefresh' => true,
             'isCascadeRemove' => true,
             'nullable' => false,
+            'orphanRemoval' => false,
             'strategy' => 'pushPull',
         ), $classMetadata->fieldMappings['account']);
 
@@ -161,6 +169,7 @@ abstract class AbstractDriverTest extends \PHPUnit_Framework_TestCase
             'isCascadeRefresh' => true,
             'isCascadeRemove' => true,
             'nullable' => false,
+            'orphanRemoval' => false,
             'strategy' => 'pushPull',
         ), $classMetadata->fieldMappings['groups']);
 
@@ -185,6 +194,7 @@ abstract class AbstractDriverTest extends \PHPUnit_Framework_TestCase
             'isCascadeRefresh' => false,
             'isCascadeRemove' => false,
             'nullable' => false,
+            'orphanRemoval' => false,
         ), $classMetadata->fieldMappings['name']);
     }
 

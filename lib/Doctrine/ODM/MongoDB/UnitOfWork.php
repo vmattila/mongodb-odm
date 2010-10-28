@@ -139,11 +139,32 @@ class UnitOfWork implements PropertyChangedListener
     private $documentUpdates = array();
 
     /**
+     * Any pending extra updates that have been scheduled by persisters.
+     * 
+     * @var array
+     */
+    private $extraUpdates = array();
+
+    /**
      * A list of all pending document deletions.
      *
      * @var array
      */
     private $documentDeletions = array();
+
+    /**
+     * All pending collection deletions.
+     *
+     * @var array
+     */
+    private $collectionDeletions = array();
+
+    /**
+     * All pending collection updates.
+     *
+     * @var array
+     */
+    private $collectionUpdates = array();
 
     /**
      * List of collections visited during changeset calculation on a commit-phase of a UnitOfWork.
@@ -177,11 +198,11 @@ class UnitOfWork implements PropertyChangedListener
     private $evm;
 
     /**
-     * Embedded documents that are scheduled for removal.
-     *
+     * Orphaned entities that are scheduled for removal.
+     * 
      * @var array
      */
-    private $embeddedRemovals = array();
+    private $orphanRemovals = array();
 
     /**
      * The Hydrator used for hydrating array Mongo documents to Doctrine object documents.
@@ -207,21 +228,6 @@ class UnitOfWork implements PropertyChangedListener
         $this->dm = $dm;
         $this->evm = $dm->getEventManager();
         $this->hydrator = $dm->getHydrator();
-    }
-
-    /**
-     * Get the document persister instance for the given document name
-     *
-     * @param string $documentName
-     * @return BasicDocumentPersister
-     */
-    public function getDocumentPersister($documentName)
-    {
-        if ( ! isset($this->persisters[$documentName])) {
-            $class = $this->dm->getClassMetadata($documentName);
-            $this->persisters[$documentName] = new Persisters\BasicDocumentPersister($this->dm, $class);
-        }
-        return $this->persisters[$documentName];
     }
 
     /**
@@ -256,13 +262,15 @@ class UnitOfWork implements PropertyChangedListener
         if ( ! ($this->documentInsertions ||
                 $this->documentDeletions ||
                 $this->documentUpdates ||
-                $this->embeddedRemovals)) {
+                $this->collectionUpdates ||
+                $this->collectionDeletions ||
+                $this->orphanRemovals)) {
             return; // Nothing to do.
         }
 
-        if ($this->embeddedRemovals) {
-            foreach ($this->embeddedRemovals as $removal) {
-                $this->remove($removal);
+        if ($this->orphanRemovals) {
+            foreach ($this->orphanRemovals as $orphan) {
+                $this->remove($orphan);
             }
         }
 
@@ -281,12 +289,22 @@ class UnitOfWork implements PropertyChangedListener
                 }
                 $this->executeInserts($class, $options);
             }
-            foreach ($commitOrder as $class) {
-                if ($class->isEmbeddedDocument) {
-                    continue;
-                }
-                $this->executeReferenceUpdates($class, $options);
-            }
+        }
+
+        // Extra updates that were requested by persisters.
+        if ($this->extraUpdates) {
+            $this->executeExtraUpdates();
+        }
+
+        // Collection deletions (deletions of complete collections)
+        foreach ($this->collectionDeletions as $collectionToDelete) {
+            $this->getCollectionPersister($collectionToDelete->getMapping())
+                    ->delete($collectionToDelete);
+        }
+        // Collection updates (deleteRows, updateRows, insertRows)
+        foreach ($this->collectionUpdates as $collectionToUpdate) {
+            $this->getCollectionPersister($collectionToUpdate->getMapping())
+                    ->update($collectionToUpdate);
         }
 
         if ($this->documentUpdates) {
@@ -311,23 +329,25 @@ class UnitOfWork implements PropertyChangedListener
         $this->documentInsertions =
         $this->documentUpdates =
         $this->documentDeletions =
+        $this->extraUpdates =
         $this->documentChangeSets =
+        $this->collectionUpdates =
+        $this->collectionDeletions =
         $this->visitedCollections =
         $this->scheduledForDirtyCheck =
-        $this->embeddedRemovals = array();
+        $this->orphanRemovals = array();
     }
 
     /**
-     * Executes reference updates
-     *
-     * @param Doctrine\ODM\MongoDB\Mapping\ClassMetadata $class
-     * @param array $options Array of options to be used for update()
+     * Executes any extra updates that have been scheduled.
      */
-    private function executeReferenceUpdates(ClassMetadata $class, array $options = array())
+    private function executeExtraUpdates()
     {
-        $className = $class->name;
-        $persister = $this->getDocumentPersister($className);
-        $persister->executeReferenceUpdates($options);
+        foreach ($this->extraUpdates as $oid => $update) {
+            list ($document, $changeset) = $update;
+            $this->documentChangeSets[$oid] = $changeset;
+            $this->getDocumentPersister(get_class($document))->update($document);
+        }
     }
 
     /**
@@ -369,8 +389,8 @@ class UnitOfWork implements PropertyChangedListener
                 continue;
             }
 
-            if (($class->isCollectionValuedReference($name) || $class->isCollectionValuedEmbed($name))
-                    && $value !== null && ! ($value instanceof PersistentCollection)) {
+            if ($class->isCollectionValuedAssociation($name) && $value !== null
+                    && ! ($value instanceof PersistentCollection)) {
                 // If $actualData[$name] is not a Collection then use an ArrayCollection.
                 if ( ! $value instanceof Collection) {
                     $value = new ArrayCollection($value);
@@ -381,20 +401,6 @@ class UnitOfWork implements PropertyChangedListener
                 $value->setOwner($document, $mapping);
                 $value->setDirty( ! $value->isEmpty());
                 $class->reflFields[$name]->setValue($document, $value);
-            }
-
-            // We need to flatten the embedded documents so they are just arrays of
-            // data instead of the actual objects. This is necessary to maintain all the old
-            // values.
-            if ($class->isCollectionValuedEmbed($name) && $value) {
-                $embeddedDocuments = $value;
-                $actualData[$name] = array();
-                foreach ($embeddedDocuments as $key => $embeddedDocument) {
-                    $actualData[$name][$key] = $this->getDocumentActualData($embeddedDocument);
-                }
-            } elseif ($class->isSingleValuedEmbed($name) && is_object($value)) {
-                $embeddedDocument = $value;
-                $actualData[$name] = $this->getDocumentActualData($embeddedDocument);
             } else {
                 $actualData[$name] = $value;
             }
@@ -422,6 +428,10 @@ class UnitOfWork implements PropertyChangedListener
      * If the document is already fully MANAGED (has been fetched from the database before)
      * and any changes to its properties are detected, then a reference to the document is stored
      * there to mark it for an update.
+     *
+     * {@link _collectionDeletions}
+     * If a PersistentCollection has been de-referenced in a fully MANAGED document,
+     * then this collection is marked for deletion.
      *
      * @param object $parentDocument The top most parent document of the document we are computing.
      * @param ClassMetadata $class The class descriptor of the document.
@@ -469,11 +479,18 @@ class UnitOfWork implements PropertyChangedListener
                     if (is_object($orgValue)) {
                         $embeddedOid = spl_object_hash($orgValue);
                         $orgValue = isset($this->originalDocumentData[$embeddedOid]) ? $this->originalDocumentData[$embeddedOid] : $orgValue;
-                        if ($orgValue !== null) {
-                            $this->scheduleEmbeddedRemoval($orgValue);
+                        if ($orgValue !== null && $class->fieldMappings[$propName]['orphanRemoval']) {
+                            $this->scheduleOrphanRemoval($orgValue);
                         }
                     }
                     $changeSet[$propName] = array($orgValue, $actualValue);
+                } else if ($orgValue instanceof PersistentCollection && $orgValue !== $actualValue) {
+                        exit('test');
+                        // A PersistentCollection was de-referenced, so delete it.
+                        if  ( ! in_array($orgValue, $this->collectionDeletions, true)) {
+                            exit('test');
+                            $this->collectionDeletions[] = $orgValue;
+                        }
                 } else if (isset($class->fieldMappings[$propName]['reference']) && $class->fieldMappings[$propName]['type'] === 'one' && $orgValue !== $actualValue) {
                     if (is_object($orgValue)) {
                         $referenceOid = spl_object_hash($orgValue);
@@ -563,6 +580,10 @@ class UnitOfWork implements PropertyChangedListener
     private function computeAssociationChanges($parentDocument, $mapping, $value)
     {
         if ($value instanceof PersistentCollection && $value->isDirty()) {
+          if ($value->getMapping() === null) {
+            throw new \InvalidArgumentException('test');
+          }
+            $this->collectionUpdates[] = $value;
             $this->visitedCollections[] = $value;
         }
 
@@ -1101,6 +1122,28 @@ class UnitOfWork implements PropertyChangedListener
     public function isScheduledForUpdate($document)
     {
         return isset($this->documentUpdates[spl_object_hash($document)]);
+    }
+
+    /**
+     * INTERNAL:
+     * Schedules an extra update that will be executed immediately after the
+     * regular document updates within the currently running commit cycle.
+     * 
+     * Extra updates for documents are stored as (document, changeset) tuples.
+     * 
+     * @ignore
+     * @param object $document The document for which to schedule an extra update.
+     * @param array $changeset The changeset of the document (what to update).
+     */
+    public function scheduleExtraUpdate($entity, array $changeset)
+    {
+        $oid = spl_object_hash($entity);
+        if (isset($this->extraUpdates[$oid])) {
+            list($ignored, $changeset2) = $this->extraUpdates[$oid];
+            $this->extraUpdates[$oid] = array($entity, $changeset + $changeset2);
+        } else {
+            $this->extraUpdates[$oid] = array($entity, $changeset);
+        }
     }
 
     public function isScheduledForDirtyCheck($document)
@@ -1660,9 +1703,9 @@ class UnitOfWork implements PropertyChangedListener
 
                         if ( ! $mergeCol instanceof PersistentCollection) {
                             $mergeCol = new PersistentCollection($mergeCol, $this->dm);
-                            $mergeCol->setOwner($managedCopy, $assoc2);
                             $mergeCol->setInitialized(true);
                         }
+                        $mergeCol->setOwner($managedCopy, $assoc2);
                         $prop->setValue($managedCopy, $mergeCol);
                     }
                 }
@@ -1997,7 +2040,9 @@ class UnitOfWork implements PropertyChangedListener
         $this->documentInsertions =
         $this->documentUpdates =
         $this->documentDeletions =
-        $this->embeddedRemovals = array();
+        $this->collectionDeletions =
+        $this->collectionUpdates =
+        $this->orphanRemovals = array();
         if ($this->commitOrderCalculator !== null) {
             $this->commitOrderCalculator->clear();
         }
@@ -2005,16 +2050,29 @@ class UnitOfWork implements PropertyChangedListener
 
     /**
      * INTERNAL:
-     * Schedules an embedded document for removal. The remove() operation will be
-     * invoked on that document at the beginning of the next commit of this
+     * Schedules an orphaned entity for removal. The remove() operation will be
+     * invoked on that entity at the beginning of the next commit of this
      * UnitOfWork.
-     *
+     * 
      * @ignore
-     * @param object $document
+     * @param object $entity
      */
-    public function scheduleEmbeddedRemoval($document)
+    public function scheduleOrphanRemoval($entity)
     {
-        $this->embeddedRemovals[spl_object_hash($document)] = $document;
+        $this->orphanRemovals[spl_object_hash($entity)] = $entity;
+    }
+
+    /**
+     * INTERNAL:
+     * Schedules a complete collection for removal when this UnitOfWork commits.
+     *
+     * @param PersistentCollection $coll
+     */
+    public function scheduleCollectionDeletion(PersistentCollection $coll)
+    {
+        //TODO: if $coll is already scheduled for recreation ... what to do?
+        // Just remove $coll from the scheduled recreations?
+        $this->collectionDeletions[] = $coll;
     }
 
     public function isCollectionScheduledForDeletion(PersistentCollection $coll)
@@ -2200,6 +2258,51 @@ class UnitOfWork implements PropertyChangedListener
         return $count;
     }
 
+
+    /**
+     * Gets the DocumentPersister for a Document.
+     *
+     * @param string $documentName  The name of the Document.
+     * @return Doctrine\ODM\MongoDB\Persisters\AbstractDocumentPersister
+     */
+    public function getDocumentPersister($documentName)
+    {
+        if ( ! isset($this->persisters[$documentName])) {
+            $class = $this->dm->getClassMetadata($documentName);
+            if ($class->isInheritanceTypeNone()) {
+                $persister = new Persisters\BasicDocumentPersister($this->dm, $class);
+            } else if ($class->isInheritanceTypeSingleCollection()) {
+                $persister = new Persisters\SingleCollectionPersister($this->dm, $class);
+            } else if ($class->isInheritanceTypeCollectionPerClass()) {
+                $persister = new Persisters\CollectionPerClassPersister($this->dm, $class);
+            } else {
+                $persister = new Persisters\BasicDocumentPersister($this->dm, $class);
+            }
+            $this->persisters[$documentName] = $persister;
+        }
+        return $this->persisters[$documentName];
+    }
+
+    /**
+     * Gets a collection persister for a collection-valued association.
+     *
+     * @param array $mapping
+     * @return AbstractCollectionPersister
+     */
+    public function getCollectionPersister(array $mapping)
+    {
+        $type = isset($mapping['reference']) ? 'reference' : 'embedded';
+        if ( ! isset($this->collectionPersisters[$type])) {
+            if (isset($mapping['reference'])) {
+                $persister = new Persisters\ReferenceManyPersister($this->dm);
+            } else if (isset($mapping['embedded'])) {
+                $persister = new Persisters\EmbeddedManyPersister($this->dm);
+            }
+            $this->collectionPersisters[$type] = $persister;
+        }
+        return $this->collectionPersisters[$type];
+    }
+
     /**
      * INTERNAL:
      * Registers a document as managed.
@@ -2286,6 +2389,26 @@ class UnitOfWork implements PropertyChangedListener
     public function getScheduledDocumentDeletions()
     {
         return $this->documentDeletions;
+    }
+
+    /**
+     * Get the currently scheduled complete collection deletions
+     *
+     * @return array
+     */
+    public function getScheduledCollectionDeletions()
+    {
+        return $this->collectionDeletions;
+    }
+
+    /**
+     * Gets the currently scheduled collection inserts, updates and deletes.
+     *
+     * @return array
+     */
+    public function getScheduledCollectionUpdates()
+    {
+        return $this->collectionUpdates;
     }
 
     private static function objToStr($obj)

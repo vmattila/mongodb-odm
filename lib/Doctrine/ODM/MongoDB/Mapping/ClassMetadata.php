@@ -43,6 +43,11 @@ use Doctrine\ODM\MongoDB\MongoDBException;
  */
 class ClassMetadata
 {
+    const EMBEDDED_ONE = 1;
+    const EMBEDDED_MANY = 2;
+    const REFERENCE_ONE = 3;
+    const REFERENCE_MANY = 4;
+
     /* The inheritance mapping types */
     /**
      * NONE means the class does not participate in an inheritance hierarchy
@@ -839,10 +844,17 @@ class ClassMetadata
         $mapping['isCascadeMerge'] = $default;
         $mapping['isCascadeDetach'] = $default;
         $mapping['isCascadeCallbacks'] = $default;
+        $mapping['isCascadeCallbacks'] = $default;
         if (isset($mapping['cascade']) && is_array($mapping['cascade'])) {
             foreach ($mapping['cascade'] as $cascade) {
                 $mapping['isCascade' . ucfirst($cascade)] = true;
             }
+        }
+        if (isset($mapping['embedded']) && $mapping['type'] === 'many') {
+            $mapping['orphanRemoval'] = true;
+        } else {
+            $mapping['orphanRemoval'] = isset($mapping['orphanRemoval']) ?
+                    (bool) $mapping['orphanRemoval'] : false;
         }
         unset($mapping['cascade']);
         if (isset($mapping['file']) && $mapping['file'] === true) {
@@ -968,6 +980,11 @@ class ClassMetadata
     {
         return isset($this->fieldMappings[$fieldName]['reference']) &&
                 $this->fieldMappings[$fieldName]['type'] === 'many';
+    }
+
+    public function isCollectionValuedAssociation($fieldName)
+    {
+        return $this->isCollectionValuedReference($fieldName) || $this->isCollectionValuedEmbed($fieldName);
     }
 
     /**

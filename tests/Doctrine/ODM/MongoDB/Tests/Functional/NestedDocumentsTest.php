@@ -97,6 +97,7 @@ class NestedDocumentsTest extends \Doctrine\ODM\MongoDB\Tests\BaseTest
 
         $test = $this->dm->findOne(__NAMESPACE__.'\Hierarchy', array('name' => 'Root'));
         $this->assertNotNull($test);
+        $this->assertNotNull($test->getChild('Child 1'));
         $child1 = $test->getChild('Child 1')->setName('Child 1 Changed');
         $child2 = $test->getChild('Child 2')->setName('Child 2 Changed');
         $test->setName('Root Changed');
