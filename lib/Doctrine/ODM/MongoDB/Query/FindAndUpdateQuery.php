@@ -26,7 +26,7 @@ namespace Doctrine\ODM\MongoDB\Query;
  * @since       1.0
  * @author      Jonathan H. Wage <jonwage@gmail.com>
  */
-class FindAndUpdateQuery extends AbstractQuery
+class FindAndUpdateQuery extends AbstractQuery implements JavascriptInterface
 {
     protected $select = array();
     protected $query = array();
@@ -73,6 +73,33 @@ class FindAndUpdateQuery extends AbstractQuery
 
     public function execute(array $options = array())
     {
+        $command = $this->getCommand();
+        $result = $this->dm->getDocumentDB($this->class->name)
+            ->command($command);
+        if (isset($result['value'])) {
+            return $this->dm->getUnitOfWork()->getOrCreateDocument(
+                $this->class->name, $result['value']
+            );
+        }
+        return $result;
+    }
+
+    public function toJavascript()
+    {
+        $command = $this->getCommand();
+
+        $collection = $command['findandmodify'];
+        unset($command['findandmodify']);
+
+        return sprintf(
+            'db.%s.findAndModify(%s)',
+            $collection,
+            $this->bsonEncode($command)
+        );
+    }
+
+    private function getCommand()
+    {
         $command = array();
         $command['findandmodify'] = $this->dm->getDocumentCollection($this->class->name)->getName();
         if ($this->query) {
@@ -94,13 +121,6 @@ class FindAndUpdateQuery extends AbstractQuery
         if ($this->limit) {
             $command['num'] = $this->limit;
         }
-        $result = $this->dm->getDocumentDB($this->class->name)
-            ->command($command);
-        if (isset($result['value'])) {
-            return $this->dm->getUnitOfWork()->getOrCreateDocument(
-                $this->class->name, $result['value']
-            );
-        }
-        return $result;
+        return $command;
     }
 }
