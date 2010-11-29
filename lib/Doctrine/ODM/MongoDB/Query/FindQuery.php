@@ -28,7 +28,7 @@ use Doctrine\ODM\MongoDB\MongoCursor;
  * @since       1.0
  * @author      Jonathan H. Wage <jonwage@gmail.com>
  */
-class FindQuery extends AbstractQuery
+class FindQuery extends AbstractQuery implements JavascriptInterface
 {
     protected $reduce;
     protected $select = array();
@@ -117,5 +117,39 @@ class FindQuery extends AbstractQuery
             $cursor->hint($keyPattern);
         }
         return $cursor;
+    }
+
+    public function toJavascript()
+    {
+        if ($this->select) {
+            $code = sprintf(
+                'db.%s.find(%s, %s)',
+                $this->dm->getDocumentCollection($this->class->name)->getName(),
+                $this->bsonEncode($this->query),
+                $this->bsonEncode($this->select)
+            );
+        } else {
+            $code = sprintf(
+                'db.%s.find(%s)',
+                $this->dm->getDocumentCollection($this->class->name)->getName(),
+                $this->bsonEncode($this->query)
+            );
+        }
+        if (null !== $this->limit) {
+            $code .= sprintf('.limit(%s)', $this->limit);
+        }
+        if (null !== $this->skip) {
+            $code .= sprintf('.skip(%s)', $this->skip);
+        }
+        if ($this->sort) {
+            $code .= sprintf('.sort(%s)', $this->bsonEncode($this->sort));
+        }
+        if ($this->snapshot) {
+            $code .= '.snapshot()';
+        }
+        foreach ($this->hints as $keyPattern) {
+            $code .= sprintf('._addSpecial("$hint", %s)', $this->bsonEncode($keyPattern));
+        }
+        return $code;
     }
 }
