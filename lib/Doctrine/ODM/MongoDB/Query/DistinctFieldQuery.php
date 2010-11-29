@@ -28,7 +28,7 @@ use Doctrine\ODM\MongoDB\MongoArrayIterator;
  * @since       1.0
  * @author      Jonathan H. Wage <jonwage@gmail.com>
  */
-class DistinctFieldQuery extends AbstractQuery
+class DistinctFieldQuery extends AbstractQuery implements JavascriptInterface
 {
     protected $distinctField;
     protected $query;
@@ -52,5 +52,23 @@ class DistinctFieldQuery extends AbstractQuery
                 'query' => $this->query
             ));
         return new MongoArrayIterator($result['values']);
+    }
+
+    public function toJavascript()
+    {
+        if ($this->query) {
+            return sprintf(
+                'db.%s.distinct(%s, %s)',
+                $this->dm->getDocumentCollection($this->class->name)->getName(),
+                json_encode($this->distinctField),
+                BSONHelper::fromArray($this->query)
+            );
+        } else {
+            return sprintf(
+                'db.%s.distinct(%s)',
+                $this->dm->getDocumentCollection($this->class->name)->getName(),
+                json_encode($this->distinctField)
+            );
+        }
     }
 }
