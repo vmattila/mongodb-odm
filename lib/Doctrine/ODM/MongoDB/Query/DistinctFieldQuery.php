@@ -61,7 +61,7 @@ class DistinctFieldQuery extends AbstractQuery implements JavascriptInterface
                 'db.%s.distinct(%s, %s)',
                 $this->dm->getDocumentCollection($this->class->name)->getName(),
                 json_encode($this->distinctField),
-                BSONHelper::fromArray($this->query)
+                $this->bsonEncode($this->query)
             );
         } else {
             return sprintf(
