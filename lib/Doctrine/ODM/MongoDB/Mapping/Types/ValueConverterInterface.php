@@ -31,9 +31,9 @@ namespace Doctrine\ODM\MongoDB\Mapping\Types;
  */
 interface ValueConverterInterface
 {
-    function convertToDatabaseValue($value);
+    function convertToDatabaseValue($value, array $mapping);
 
-    function convertToPHPValue($value);
+    function convertToPHPValue($value, array $mapping);
 
-    function compile();
+    function compile(array $mapping);
 }

@@ -30,7 +30,7 @@ namespace Doctrine\ODM\MongoDB\Mapping\Types;
  */
 class IdType implements ValueConverterInterface
 {
-    public function convertToDatabaseValue($value)
+    public function convertToDatabaseValue($value, array $mapping)
     {
         if ($value === null) {
             return null;
@@ -41,12 +41,12 @@ class IdType implements ValueConverterInterface
         return $value;
     }
 
-    public function convertToPHPValue($value)
+    public function convertToPHPValue($value, array $mapping)
     {
         return $value !== null ? (string) $value : null;
     }
 
-    public function compile()
+    public function compile(array $mapping)
     {
         return '$return = (string) $value;';
     }

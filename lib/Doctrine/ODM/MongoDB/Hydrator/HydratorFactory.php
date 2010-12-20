@@ -167,7 +167,7 @@ EOF
                 }
             }
 
-            if ( ! isset($mapping['association'])) {
+            if ( ! isset($mapping['association']) || $mapping['association'] === ClassMetadata::REFERENCE_ONE) {
                 $code .= sprintf(<<<EOF
 
         /** @Field(type="{$mapping['type']}") */
@@ -182,26 +182,7 @@ EOF
                 ,
                     $mapping['name'],
                     $mapping['fieldName'],
-                    Type::getType($mapping['type'])->compile()
-                );
-            } elseif ($mapping['association'] === ClassMetadata::REFERENCE_ONE) {
-                $code .= sprintf(<<<EOF
-
-        /** @ReferenceOne */
-        if (isset(\$data['%1\$s'])) {
-            \$reference = \$data['%1\$s'];
-            \$className = \$this->dm->getClassNameFromDiscriminatorValue(\$this->class->fieldMappings['%2\$s'], \$reference);
-            \$targetMetadata = \$this->dm->getClassMetadata(\$className);
-            \$id = \$targetMetadata->getPHPIdentifierValue(\$reference['\$id']);
-            \$return = \$this->dm->getReference(\$className, \$id);
-            \$this->class->reflFields['%2\$s']->setValue(\$document, \$return);
-            \$hydratedData['%2\$s'] = \$return;
-        }
-
-EOF
-                ,
-                    $mapping['name'],
-                    $mapping['fieldName']
+                    Type::getType($mapping['type'])->compile($mapping)
                 );
             } elseif ($mapping['association'] === ClassMetadata::REFERENCE_MANY || $mapping['association'] === ClassMetadata::EMBED_MANY) {
                 $code .= sprintf(<<<EOF

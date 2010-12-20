@@ -31,17 +31,17 @@ namespace Doctrine\ODM\MongoDB\Mapping\Types;
  */
 class CollectionType implements ValueConverterInterface
 {
-    public function convertToDatabaseValue($value)
+    public function convertToDatabaseValue($value, array $mapping)
     {
         return $value !== null ? array_values($value) : null;
     }
 
-    public function convertToPHPValue($value)
+    public function convertToPHPValue($value, array $mapping)
     {
         return $value !== null ? array_values($value) : null;
     }
 
-    public function compile()
+    public function compile(array $mapping)
     {
         return '$return = $value;';
     }

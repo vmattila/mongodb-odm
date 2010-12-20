@@ -30,17 +30,17 @@ namespace Doctrine\ODM\MongoDB\Mapping\Types;
  */
 class BinDataCustomType implements ValueConverterInterface
 {
-    public function convertToDatabaseValue($value)
+    public function convertToDatabaseValue($value, array $mapping)
     {
         return $value !== null ? new \MongoBinData($value, \MongoBinData::CUSTOM) : null;
     }
 
-    public function convertToPHPValue($value)
+    public function convertToPHPValue($value, array $mapping)
     {
         return $value !== null ? $value->bin : null;
     }
 
-    public function compile()
+    public function compile(array $mapping)
     {
         return '$return = $value !== null ? $value->bin : null;';
     }

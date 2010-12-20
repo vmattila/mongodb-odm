@@ -30,7 +30,7 @@ namespace Doctrine\ODM\MongoDB\Mapping\Types;
  */
 class DateType implements ValueConverterInterface
 {
-    public function convertToDatabaseValue($value)
+    public function convertToDatabaseValue($value, array $mapping)
     {
         if ($value === null) {
             return null;
@@ -53,7 +53,7 @@ class DateType implements ValueConverterInterface
         return new \MongoDate($value);
     }
 
-    public function convertToPHPValue($value)
+    public function convertToPHPValue($value, array $mapping)
     {
         if ($value === null) {
             return null;
@@ -67,7 +67,7 @@ class DateType implements ValueConverterInterface
         return $date;
     }
 
-    public function compile()
+    public function compile(array $mapping)
     {
         return 'if ($value === null) { return null; } if ($value instanceof \MongoDate) { $date = new \DateTime(); $date->setTimestamp($value->sec); $return = $date; } else { $return = new \DateTime($value); }';
     }

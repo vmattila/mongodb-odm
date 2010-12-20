@@ -105,7 +105,7 @@ class PersistenceBuilder
             if ($new !== null) {
                 // @Field, @String, @Date, etc.
                 if ( ! isset($mapping['association'])) {
-                    $value = Type::getType($mapping['type'])->convertToDatabaseValue($new);
+                    $value = Type::getType($mapping['type'])->convertToDatabaseValue($new, $mapping);
 
                 // @ReferenceOne
                 } elseif (isset($mapping['association']) && $mapping['association'] === ClassMetadata::REFERENCE_ONE) {
@@ -191,7 +191,7 @@ class PersistenceBuilder
             // @Field, @String, @Date, etc.
             } elseif ( ! isset($mapping['association'])) {
                 if (isset($new) || $mapping['nullable'] === true) {
-                    $updateData[$this->cmd . 'set'][$mapping['name']] = Type::getType($mapping['type'])->convertToDatabaseValue($new);
+                    $updateData[$this->cmd . 'set'][$mapping['name']] = Type::getType($mapping['type'])->convertToDatabaseValue($new, $mapping);
                 } else {
                     $updateData[$this->cmd . 'unset'][$mapping['name']] = true;
                 }
@@ -287,7 +287,7 @@ class PersistenceBuilder
             if ($rawValue !== null) {
                 /** @Field, @String, @Date, etc. */
                 if ( ! isset($mapping['association'])) {
-                    $value = Type::getType($mapping['type'])->convertToDatabaseValue($rawValue);
+                    $value = Type::getType($mapping['type'])->convertToDatabaseValue($rawValue, $mapping);
 
                 /** @EmbedOne */
                 } elseif (isset($mapping['association']) && $mapping['association'] == ClassMetadata::EMBED_ONE) {

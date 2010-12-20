@@ -1178,8 +1178,8 @@ class ClassMetadata
      */
     public function getPHPIdentifierValue($id)
     {
-        $idType = $this->fieldMappings[$this->identifier]['type'];
-        return Types\Type::getType($idType)->convertToPHPValue($id);
+        $mapping = $this->fieldMappings[$this->identifier];
+        return Types\Type::getType($mapping['type'])->convertToPHPValue($id, $mapping);
     }
 
     /**
@@ -1190,8 +1190,8 @@ class ClassMetadata
      */
     public function getDatabaseIdentifierValue($id)
     {
-        $idType = $this->fieldMappings[$this->identifier]['type'];
-        return Types\Type::getType($idType)->convertToDatabaseValue($id);
+        $mapping = $this->fieldMappings[$this->identifier];
+        return Types\Type::getType($mapping['type'])->convertToDatabaseValue($id, $mapping);
     }
 
     /**

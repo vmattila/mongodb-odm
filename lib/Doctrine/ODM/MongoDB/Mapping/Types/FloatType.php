@@ -30,17 +30,17 @@ namespace Doctrine\ODM\MongoDB\Mapping\Types;
  */
 class FloatType implements ValueConverterInterface
 {
-    public function convertToDatabaseValue($value)
+    public function convertToDatabaseValue($value, array $mapping)
     {
         return $value !== null ? (float) $value : null;
     }
 
-    public function convertToPHPValue($value)
+    public function convertToPHPValue($value, array $mapping)
     {
         return $value !== null ? (float) $value : null;
     }
 
-    public function compile()
+    public function compile(array $mapping)
     {
         return '$return = (float) $value;';
     }

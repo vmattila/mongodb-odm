@@ -30,17 +30,17 @@ namespace Doctrine\ODM\MongoDB\Mapping\Types;
  */
 class FileType implements ValueConverterInterface
 {
-    public function convertToDatabaseValue($value)
+    public function convertToDatabaseValue($value, array $mapping)
     {
         return $value;
     }
 
-    public function convertToPHPValue($value)
+    public function convertToPHPValue($value, array $mapping)
     {
         return $value;
     }
 
-    public function compile()
+    public function compile(array $mapping)
     {
         return '$return = $value;';
     }

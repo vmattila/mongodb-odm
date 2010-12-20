@@ -30,7 +30,7 @@ namespace Doctrine\ODM\MongoDB\Mapping\Types;
  */
 class KeyType implements ValueConverterInterface
 {
-    public function convertToDatabaseValue($value)
+    public function convertToDatabaseValue($value, array $mapping)
     {
         if ($value === null) {
             return null;
@@ -38,7 +38,7 @@ class KeyType implements ValueConverterInterface
         return $value ? new \MongoMaxKey : new \MongoMinKey;
     }
 
-    public function convertToPHPValue($value)
+    public function convertToPHPValue($value, array $mapping)
     {
         if ($value === null) {
             return null;
@@ -46,7 +46,7 @@ class KeyType implements ValueConverterInterface
         return $value instanceof \MongoMaxKey ? 1 : 0;
     }
 
-    public function compile()
+    public function compile(array $mapping)
     {
         return '$return = $value;';
     }

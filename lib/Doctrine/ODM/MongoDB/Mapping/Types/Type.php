@@ -33,30 +33,6 @@ use Doctrine\ODM\MongoDB\MongoDBException;
 final class Type
 {
     /**
-     * Array of string types mapped to their type class.
-     */
-    private static $typesMap = array(
-        'id' => 'Doctrine\ODM\MongoDB\Mapping\Types\IdType',
-        'custom_id' => 'Doctrine\ODM\MongoDB\Mapping\Types\CustomIdType',
-        'boolean' => 'Doctrine\ODM\MongoDB\Mapping\Types\BooleanType',
-        'int' => 'Doctrine\ODM\MongoDB\Mapping\Types\IntType',
-        'float' => 'Doctrine\ODM\MongoDB\Mapping\Types\FloatType',
-        'string' => 'Doctrine\ODM\MongoDB\Mapping\Types\StringType',
-        'date' => 'Doctrine\ODM\MongoDB\Mapping\Types\DateType',
-        'key' => 'Doctrine\ODM\MongoDB\Mapping\Types\KeyType',
-        'timestamp' => 'Doctrine\ODM\MongoDB\Mapping\Types\TimestampType',
-        'bin' => 'Doctrine\ODM\MongoDB\Mapping\Types\BinDataType',
-        'bin_func' => 'Doctrine\ODM\MongoDB\Mapping\Types\BinDataFuncType',
-        'bin_uuid' => 'Doctrine\ODM\MongoDB\Mapping\Types\BinDataUUIDType',
-        'bin_md5' => 'Doctrine\ODM\MongoDB\Mapping\Types\BinDataMD5Type',
-        'custom' => 'Doctrine\ODM\MongoDB\Mapping\Types\BinDataCustomType',
-        'file' => 'Doctrine\ODM\MongoDB\Mapping\Types\FileType',
-        'hash' => 'Doctrine\ODM\MongoDB\Mapping\Types\HashType',
-        'collection' => 'Doctrine\ODM\MongoDB\Mapping\Types\CollectionType',
-        'increment' => 'Doctrine\ODM\MongoDB\Mapping\Types\IncrementType'
-    );
-
-    /**
      * Array of instantiated type classes.
      */
     private static $types = array();
@@ -67,17 +43,6 @@ final class Type
     private function __construct(){}
 
     /**
-     * Register a new type in the type map.
-     *
-     * @param string $name The name of the type.
-     * @param string $class The class name.
-     */
-    public static function registerType($name, $class)
-    {
-        self::$typesMap[$name] = $class;
-    }
-
-    /**
      * Get a Type instance.
      *
      * @param string $type The type name.
@@ -86,13 +51,10 @@ final class Type
      */
     public static function getType($type)
     {
-        if ( ! isset(self::$typesMap[$type])) {
+        if ( ! isset(self::$types[$type])) {
             throw new \InvalidArgumentException(sprintf('Invalid type specified "%s".', $type));
         }
-        if ( ! isset(self::$types[$type])) {
-            $className = self::$typesMap[$type];
-            self::$types[$type] = new $className;
-        }
+
         return self::$types[$type];
     }
 
@@ -104,13 +66,9 @@ final class Type
      * @param string $className The class name of the custom type.
      * @throws MongoDBException
      */
-    public static function addType($name, $className)
+    public static function setType($name, ValueConverterInterface $converter)
     {
-        if (isset(self::$typesMap[$name])) {
-            throw MongoDBException::typeExists($name);
-        }
-
-        self::$typesMap[$name] = $className;
+        self::$types[$name] = $converter;
     }
 
     /**
@@ -122,24 +80,7 @@ final class Type
      */
     public static function hasType($name)
     {
-        return isset(self::$typesMap[$name]);
-    }
-
-    /**
-     * Overrides an already defined type to use a different implementation.
-     *
-     * @static
-     * @param string $name
-     * @param string $className
-     * @throws MongoDBException
-     */
-    public static function overrideType($name, $className)
-    {
-        if ( ! isset(self::$typesMap[$name])) {
-            throw MongoDBException::typeNotFound($name);
-        }
-
-        self::$typesMap[$name] = $className;
+        return isset(self::$types[$name]);
     }
 
     /**
@@ -150,6 +91,6 @@ final class Type
      */
     public static function getTypesMap()
     {
-        return self::$typesMap;
+        return self::$types;
     }
 }

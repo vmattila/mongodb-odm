@@ -19,6 +19,10 @@
 
 namespace Doctrine\ODM\MongoDB;
 
+use Doctrine\ODM\MongoDB\Mapping\Types\ReferenceType;
+
+use Doctrine\ODM\MongoDB\Mapping\Types\Type;
+
 use Doctrine\ODM\MongoDB\Mapping\ClassMetadata,
     Doctrine\ODM\MongoDB\Mapping\ClassMetadataFactory,
     Doctrine\ODM\MongoDB\Mapping\Driver\PHPDriver,
@@ -165,6 +169,29 @@ class DocumentManager
                 $this->config->getProxyNamespace(),
                 $this->config->getAutoGenerateProxyClasses()
         );
+        foreach (array(
+            'id' => 'Doctrine\ODM\MongoDB\Mapping\Types\IdType',
+            'custom_id' => 'Doctrine\ODM\MongoDB\Mapping\Types\CustomIdType',
+            'boolean' => 'Doctrine\ODM\MongoDB\Mapping\Types\BooleanType',
+            'int' => 'Doctrine\ODM\MongoDB\Mapping\Types\IntType',
+            'float' => 'Doctrine\ODM\MongoDB\Mapping\Types\FloatType',
+            'string' => 'Doctrine\ODM\MongoDB\Mapping\Types\StringType',
+            'date' => 'Doctrine\ODM\MongoDB\Mapping\Types\DateType',
+            'key' => 'Doctrine\ODM\MongoDB\Mapping\Types\KeyType',
+            'timestamp' => 'Doctrine\ODM\MongoDB\Mapping\Types\TimestampType',
+            'bin' => 'Doctrine\ODM\MongoDB\Mapping\Types\BinDataType',
+            'bin_func' => 'Doctrine\ODM\MongoDB\Mapping\Types\BinDataFuncType',
+            'bin_uuid' => 'Doctrine\ODM\MongoDB\Mapping\Types\BinDataUUIDType',
+            'bin_md5' => 'Doctrine\ODM\MongoDB\Mapping\Types\BinDataMD5Type',
+            'custom' => 'Doctrine\ODM\MongoDB\Mapping\Types\BinDataCustomType',
+            'file' => 'Doctrine\ODM\MongoDB\Mapping\Types\FileType',
+            'hash' => 'Doctrine\ODM\MongoDB\Mapping\Types\HashType',
+            'collection' => 'Doctrine\ODM\MongoDB\Mapping\Types\CollectionType',
+            'increment' => 'Doctrine\ODM\MongoDB\Mapping\Types\IncrementType'
+        ) as $type => $class) {
+            Type::setType($type, new $class);
+        }
+        Type::setType('one', new ReferenceType($this, $this->unitOfWork, $this->cmd));
     }
 
     /**
