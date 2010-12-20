@@ -28,7 +28,7 @@ namespace Doctrine\ODM\MongoDB\Mapping\Types;
  * @author      Jonathan H. Wage <jonwage@gmail.com>
  * @author      Roman Borschel <roman@code-factory.org>
  */
-class FloatType extends Type
+class FloatType implements ValueConverterInterface
 {
     public function convertToDatabaseValue($value)
     {
@@ -40,12 +40,7 @@ class FloatType extends Type
         return $value !== null ? (float) $value : null;
     }
 
-    public function closureToMongo()
-    {
-        return '$return = (float) $value;';
-    }
-
-    public function closureToPHP()
+    public function compile()
     {
         return '$return = (float) $value;';
     }

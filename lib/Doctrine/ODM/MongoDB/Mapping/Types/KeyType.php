@@ -28,7 +28,7 @@ namespace Doctrine\ODM\MongoDB\Mapping\Types;
  * @author      Jonathan H. Wage <jonwage@gmail.com>
  * @author      Roman Borschel <roman@code-factory.org>
  */
-class KeyType extends Type
+class KeyType implements ValueConverterInterface
 {
     public function convertToDatabaseValue($value)
     {
@@ -44,5 +44,10 @@ class KeyType extends Type
             return null;
         }
         return $value instanceof \MongoMaxKey ? 1 : 0;
+    }
+
+    public function compile()
+    {
+        return '$return = $value;';
     }
 }

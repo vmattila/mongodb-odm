@@ -28,7 +28,7 @@ namespace Doctrine\ODM\MongoDB\Mapping\Types;
  * @author      Jonathan H. Wage <jonwage@gmail.com>
  * @author      Roman Borschel <roman@code-factory.org>
  */
-class BinDataMD5Type extends Type
+class BinDataMD5Type implements ValueConverterInterface
 {
     public function convertToDatabaseValue($value)
     {
@@ -40,12 +40,7 @@ class BinDataMD5Type extends Type
         return $value !== null ? $value->bin : null;
     }
 
-    public function closureToMongo()
-    {
-        return '$return = $value !== null ? new \MongoBinData($value, \MongoBinData::MD5) : null;';
-    }
-
-    public function closureToPHP()
+    public function compile()
     {
         return '$return = $value !== null ? $value->bin : null;';
     }

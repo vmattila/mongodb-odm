@@ -28,7 +28,7 @@ namespace Doctrine\ODM\MongoDB\Mapping\Types;
  * @author      Jonathan H. Wage <jonwage@gmail.com>
  * @author      Roman Borschel <roman@code-factory.org>
  */
-class IdType extends Type
+class IdType implements ValueConverterInterface
 {
     public function convertToDatabaseValue($value)
     {
@@ -46,12 +46,7 @@ class IdType extends Type
         return $value !== null ? (string) $value : null;
     }
 
-    public function closureToMongo()
-    {
-        return '$return = new MongoId($value);';
-    }
-
-    public function closureToPHP()
+    public function compile()
     {
         return '$return = (string) $value;';
     }

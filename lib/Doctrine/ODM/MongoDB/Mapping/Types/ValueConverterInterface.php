@@ -20,29 +20,20 @@
 namespace Doctrine\ODM\MongoDB\Mapping\Types;
 
 /**
- * The Array type.
+ * The BinDataCustom type.
  *
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
- * @link        www.doctrine-project.com
+ * @link        www.doctrine-project.org
  * @since       1.0
  * @author      Jonathan H. Wage <jonwage@gmail.com>
  * @author      Roman Borschel <roman@code-factory.org>
  * @author      Bulat Shakirzyanov <mallluhuct@gmail.com>
  */
-class HashType implements ValueConverterInterface
+interface ValueConverterInterface
 {
-    public function convertToDatabaseValue($value)
-    {
-        return $value !== null ? (array) $value : null;
-    }
+    function convertToDatabaseValue($value);
 
-    public function convertToPHPValue($value)
-    {
-        return $value !== null ? (array) $value : null;
-    }
+    function convertToPHPValue($value);
 
-    public function compile()
-    {
-        return '$return = $value;';
-    }
+    function compile();
 }

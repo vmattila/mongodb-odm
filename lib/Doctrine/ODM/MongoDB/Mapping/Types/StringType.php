@@ -28,7 +28,7 @@ namespace Doctrine\ODM\MongoDB\Mapping\Types;
  * @author      Jonathan H. Wage <jonwage@gmail.com>
  * @author      Roman Borschel <roman@code-factory.org>
  */
-class StringType  extends Type
+class StringType  implements ValueConverterInterface
 {
     public function convertToDatabaseValue($value)
     {
@@ -40,12 +40,7 @@ class StringType  extends Type
         return $value !== null ? (string) $value : null;
     }
 
-    public function closureToMongo()
-    {
-        return '$return = (string) $value;';
-    }
-
-    public function closureToPHP()
+    public function compile()
     {
         return '$return = (string) $value;';
     }

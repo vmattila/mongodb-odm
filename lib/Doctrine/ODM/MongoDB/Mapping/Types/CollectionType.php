@@ -29,7 +29,7 @@ namespace Doctrine\ODM\MongoDB\Mapping\Types;
  * @author      Roman Borschel <roman@code-factory.org>
  * @author      Bulat Shakirzyanov <mallluhuct@gmail.com>
  */
-class CollectionType extends Type
+class CollectionType implements ValueConverterInterface
 {
     public function convertToDatabaseValue($value)
     {
@@ -39,5 +39,10 @@ class CollectionType extends Type
     public function convertToPHPValue($value)
     {
         return $value !== null ? array_values($value) : null;
+    }
+
+    public function compile()
+    {
+        return '$return = $value;';
     }
 }

@@ -182,7 +182,7 @@ EOF
                 ,
                     $mapping['name'],
                     $mapping['fieldName'],
-                    Type::getType($mapping['type'])->closureToPHP()
+                    Type::getType($mapping['type'])->compile()
                 );
             } elseif ($mapping['association'] === ClassMetadata::REFERENCE_ONE) {
                 $code .= sprintf(<<<EOF

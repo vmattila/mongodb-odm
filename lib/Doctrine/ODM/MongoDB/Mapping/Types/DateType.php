@@ -28,7 +28,7 @@ namespace Doctrine\ODM\MongoDB\Mapping\Types;
  * @author      Jonathan H. Wage <jonwage@gmail.com>
  * @author      Roman Borschel <roman@code-factory.org>
  */
-class DateType extends Type
+class DateType implements ValueConverterInterface
 {
     public function convertToDatabaseValue($value)
     {
@@ -67,12 +67,7 @@ class DateType extends Type
         return $date;
     }
 
-    public function closureToMongo()
-    {
-        return 'if ($value instanceof \DateTime) { $value = $value->getTimestamp(); } else if (is_string($value)) { $value = strtotime($value); } $return = new \MongoDate($value);';
-    }
-
-    public function closureToPHP()
+    public function compile()
     {
         return 'if ($value === null) { return null; } if ($value instanceof \MongoDate) { $date = new \DateTime(); $date->setTimestamp($value->sec); $return = $date; } else { $return = new \DateTime($value); }';
     }

@@ -29,7 +29,7 @@ namespace Doctrine\ODM\MongoDB\Mapping\Types;
  * @author      Roman Borschel <roman@code-factory.org>
  * @author      Bulat Shakirzyanov <mallluhuct@gmail.com>
  */
-class CustomIdType extends Type
+class CustomIdType implements ValueConverterInterface
 {
     public function convertToDatabaseValue($value)
     {
@@ -41,12 +41,7 @@ class CustomIdType extends Type
         return $value !== null ? $value : null;
     }
 
-    public function closureToMongo()
-    {
-        return '$return = $value;';
-    }
-
-    public function closureToPHP()
+    public function compile()
     {
         return '$return = $value;';
     }

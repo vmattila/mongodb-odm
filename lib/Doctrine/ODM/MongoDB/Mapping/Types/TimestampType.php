@@ -28,7 +28,7 @@ namespace Doctrine\ODM\MongoDB\Mapping\Types;
  * @author      Jonathan H. Wage <jonwage@gmail.com>
  * @author      Roman Borschel <roman@code-factory.org>
  */
-class TimestampType  extends Type
+class TimestampType  implements ValueConverterInterface
 {
     public function convertToDatabaseValue($value)
     {
@@ -38,5 +38,10 @@ class TimestampType  extends Type
     public function convertToPHPValue($value)
     {
         return $value !== null ? (string) $value : null;
+    }
+
+    public function compile()
+    {
+        return '$return = $value;';
     }
 }

@@ -28,6 +28,20 @@ namespace Doctrine\ODM\MongoDB\Mapping\Types;
  * @author      Jonathan H. Wage <jonwage@gmail.com>
  * @author      Roman Borschel <roman@code-factory.org>
  */
-class FileType extends Type
+class FileType implements ValueConverterInterface
 {
+    public function convertToDatabaseValue($value)
+    {
+        return $value;
+    }
+
+    public function convertToPHPValue($value)
+    {
+        return $value;
+    }
+
+    public function compile()
+    {
+        return '$return = $value;';
+    }
 }

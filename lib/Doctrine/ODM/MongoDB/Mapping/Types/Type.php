@@ -30,7 +30,7 @@ use Doctrine\ODM\MongoDB\MongoDBException;
  * @author      Jonathan H. Wage <jonwage@gmail.com>
  * @author      Roman Borschel <roman@code-factory.org>
  */
-abstract class Type
+final class Type
 {
     /**
      * Array of string types mapped to their type class.
@@ -62,38 +62,9 @@ abstract class Type
     private static $types = array();
 
     /**
-     * Converts a value from its PHP representation to its database representation
-     * of this type.
-     *
-     * @param mixed $value The value to convert.
-     * @return mixed The database representation of the value.
+     * This class cannot be instantiated
      */
-    public function convertToDatabaseValue($value)
-    {
-        return $value;
-    }
-
-    /**
-     * Converts a value from its database representation to its PHP representation
-     * of this type.
-     *
-     * @param mixed $value The value to convert.
-     * @return mixed The PHP representation of the value.
-     */
-    public function convertToPHPValue($value)
-    {
-        return $value;
-    }
-
-    public function closureToMongo()
-    {
-        return '$return = $value;';
-    }
-
-    public function closureToPHP()
-    {
-        return '$return = $value;';
-    }
+    private function __construct(){}
 
     /**
      * Register a new type in the type map.

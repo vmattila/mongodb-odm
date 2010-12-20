@@ -28,7 +28,7 @@ namespace Doctrine\ODM\MongoDB\Mapping\Types;
  * @author      Jonathan H. Wage <jonwage@gmail.com>
  * @author      Roman Borschel <roman@code-factory.org>
  */
-class IntType extends Type
+class IntType implements ValueConverterInterface
 {
     public function convertToDatabaseValue($value)
     {
@@ -40,12 +40,7 @@ class IntType extends Type
         return $value !== null ? (integer) $value : null;
     }
 
-    public function closureToMongo()
-    {
-        return '$return = (int) $value;';
-    }
-
-    public function closureToPHP()
+    public function compile()
     {
         return '$return = (int) $value;';
     }
