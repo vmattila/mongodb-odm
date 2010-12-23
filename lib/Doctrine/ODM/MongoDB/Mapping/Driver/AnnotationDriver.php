@@ -117,9 +117,6 @@ class AnnotationDriver implements Driver
             throw MongoDBException::classIsNotAValidDocument($className);
         }
 
-        if (isset($documentAnnot->db)) {
-            $class->setDatabase($documentAnnot->db);
-        }
         if (isset($documentAnnot->collection)) {
             $class->setCollection($documentAnnot->collection);
         }

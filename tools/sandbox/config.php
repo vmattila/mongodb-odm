@@ -32,8 +32,6 @@ $config->setProxyNamespace('Proxies');
 $config->setHydratorDir(__DIR__ . '/Hydrators');
 $config->setHydratorNamespace('Hydrators');
 
-$config->setDefaultDB('doctrine_odm_sandbox');
-
 /*
 $config->setLoggerCallable(function(array $log) {
     print_r($log);
@@ -45,4 +43,6 @@ $reader = new AnnotationReader();
 $reader->setDefaultAnnotationNamespace('Doctrine\ODM\MongoDB\Mapping\\');
 $config->setMetadataDriverImpl(new AnnotationDriver($reader, __DIR__ . '/Documents'));
 
-$dm = DocumentManager::create(new Connection(), $config);
+$conn = new Connection();
+$database = $conn->selectDatabase('doctrine_odm_sandbox');
+$dm = DocumentManager::create($database, $config);

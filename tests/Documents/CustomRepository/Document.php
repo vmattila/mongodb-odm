@@ -7,9 +7,10 @@ namespace Documents\CustomRepository;
  */
 
 /**
- * @Document(db="doctrine_odm_tests", collection="accounts", repositoryClass="Documents\CustomRepository\Repository")
+ * @Document(collection="accounts", repositoryClass="Documents\CustomRepository\Repository")
  */
-class Document {
+class Document
+{
 	/**
 	 * @Id
 	 */

@@ -33,13 +33,13 @@ class MapReduceTest extends \PHPUnit_Framework_TestCase
         $config->setHydratorDir(__DIR__ . '/../../../../../Hydrators');
         $config->setHydratorNamespace('Hydrators');
 
-        $config->setDefaultDB('doctrine_odm_tests');
-
         $reader = new AnnotationReader();
         $reader->setDefaultAnnotationNamespace('Doctrine\ODM\MongoDB\Mapping\\');
         $config->setMetadataDriverImpl(new AnnotationDriver($reader, __DIR__ . '/Documents'));
 
-        $this->dm = DocumentManager::create(new Connection(), $config);
+        $conn = new Connection();
+        $database = $conn->selectDatabase('doctrine_odm_tests');
+        $this->dm = DocumentManager::create($database, $config);
 
         $currencies = array('USD' => 1, 'EURO' => 1.7, 'JPN' => 0.0125);
 

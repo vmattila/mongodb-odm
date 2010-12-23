@@ -17,6 +17,8 @@ use Doctrine\MongoDB\Connection;
 abstract class BaseTest extends \PHPUnit_Framework_TestCase
 {
     protected $dm;
+    protected $connection;
+    protected $database;
     protected $uow;
 
     public function setUp()
@@ -28,8 +30,6 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
 
         $config->setHydratorDir(__DIR__ . '/../../../../Hydrators');
         $config->setHydratorNamespace('Hydrators');
-
-        $config->setDefaultDB('doctrine_odm_tests');
 
         /*
         $config->setLoggerCallable(function(array $log) {
@@ -43,8 +43,9 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
         $this->annotationDriver = new AnnotationDriver($reader, __DIR__ . '/Documents');
         $config->setMetadataDriverImpl($this->annotationDriver);
 
-        $conn = new Connection(null, array(), $config);
-        $this->dm = DocumentManager::create($conn, $config);
+        $this->connection = new Connection(null, array(), $config);
+        $this->database = $this->connection->selectDatabase('doctrine_odm_tests');
+        $this->dm = DocumentManager::create($this->database, $config);
         $this->uow = $this->dm->getUnitOfWork();
     }
 
@@ -67,12 +68,10 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
     public function tearDown()
     {
         if ($this->dm) {
-            foreach ($this->dm->getDocumentDatabases() as $db) {
-                foreach ($db->listCollections() as $collection) {
-                    $collection->drop();
-                }
+            foreach ($this->database->listCollections() as $collection) {
+                $collection->drop();
             }
-            $this->dm->getConnection()->close();
+            $this->connection->close();
         }
     }
 

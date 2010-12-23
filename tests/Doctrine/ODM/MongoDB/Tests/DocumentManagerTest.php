@@ -18,9 +18,9 @@ class DocumentManagerTest extends \Doctrine\ODM\MongoDB\Tests\BaseTest
         $this->assertInstanceOf('Documents\CustomRepository\Repository', $dm->getRepository('Documents\CustomRepository\Document'));
     }
 
-    public function testGetConnection()
+    public function testGetDatabase()
     {
-        $this->assertType('\Doctrine\MongoDB\Connection', $this->dm->getConnection());
+        $this->assertType('\Doctrine\MongoDB\Database', $this->dm->getDatabase());
     }
 
     public function testGetMetadataFactory()
@@ -123,8 +123,6 @@ class DocumentManagerTest extends \Doctrine\ODM\MongoDB\Tests\BaseTest
         $config->setHydratorDir(__DIR__ . '/../../../../Hydrators');
         $config->setHydratorNamespace('Hydrators');
 
-        $config->setDefaultDB('doctrine_odm_tests');
-
         /*
         $config->setLoggerCallable(function(array $log) {
             print_r($log);
@@ -135,11 +133,12 @@ class DocumentManagerTest extends \Doctrine\ODM\MongoDB\Tests\BaseTest
         $reader = new AnnotationReader();
         $reader->setDefaultAnnotationNamespace('Doctrine\ODM\MongoDB\Mapping\\');
         $config->setMetadataDriverImpl(new AnnotationDriver($reader, __DIR__ . '/Documents'));
-        return DocumentManager::create($this->getConnection(), $config);
+        $database = $this->getDatabase();
+        return DocumentManager::create($database, $config);
     }
 
-    protected function getConnection()
+    protected function getDatabase()
     {
-        return $this->getMock('Doctrine\MongoDB\Connection');
+        return $this->getMock('Doctrine\MongoDB\Database', array(), array(), '', false, false);
     }
 }
