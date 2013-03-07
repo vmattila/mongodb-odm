@@ -154,6 +154,39 @@ class EmbeddedTest extends \Doctrine\ODM\MongoDB\Tests\BaseTest
         $this->assertNotNull($user2);
         $this->assertEquals($user->getPhonenumbers()->toArray(), $user2->getPhonenumbers()->toArray());
     }
+	
+	public function testCloneParentAndModifyEmbeddedWithoutChangeInOriginal()
+    {
+        $address = new Address();
+        $address->setAddress('20780 Kaarina');
+
+        $user = new User();
+        $user->setUsername('vmattila');
+        $user->setAddress($address);
+
+        $this->dm->persist($user);
+        $this->dm->flush();
+        $this->dm->clear();
+
+        $user = $this->dm->createQueryBuilder('Documents\User')
+            ->field('id')->equals($user->getId())
+            ->getQuery()
+            ->getSingleResult();
+        $this->assertNotNull($user);
+        
+		// Cloning user
+		$newUser = clone $user;
+		$newUser->setId(null); // Nulling identity of the user
+		$this->assertEquals('20780 Kaarina', $newUser->getAddress()->getAddress());
+		
+		// Changing address for the new user
+		$newUser->getAddress()->setAddress('20100 Turku');
+		$this->dm->persist($newUser);
+        $this->dm->flush();
+		
+		$this->assertEquals('20100 Turku', $newUser->getAddress()->getAddress());
+		$this->assertEquals('20780 Kaarina', $user->getAddress()->getAddress());
+    }
 
     public function testPostRemoveEventOnEmbeddedManyDocument()
     {
