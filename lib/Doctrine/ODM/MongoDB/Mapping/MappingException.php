@@ -65,6 +65,11 @@ class MappingException extends BaseMappingException
         );
     }
 
+    public static function invalidValueInDiscriminatorMap($className, $databaseValue)
+    {
+        return new self('Discriminator field value '$databaseValue' does not match the discriminator map of ' . $className);
+    }
+
     public static function missingFieldName($className)
     {
         return new self("The Document class '$className' field mapping misses the 'fieldName' attribute.");

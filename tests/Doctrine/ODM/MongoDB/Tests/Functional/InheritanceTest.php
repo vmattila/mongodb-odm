@@ -106,4 +106,32 @@ class InheritanceTest extends \Doctrine\ODM\MongoDB\Tests\BaseTest
         $this->assertInstanceOf('Documents\SubProject', $projects[1]);
         $this->assertInstanceOf('Documents\OtherSubProject', $projects[2]);
     }
+
+    /**
+     * @expectedException \Doctrine\ODM\MongoDB\Hydrator\HydratorException
+     */
+    public function testUnsupportedDatabaseValueForDiscriminatorMapRaisesException()
+    {
+        $project = new \Documents\Project('Project');
+        $this->dm->persist($project);
+        $this->dm->flush();
+
+        $id = $project->getId();
+
+        $coll = $this->dm->getDocumentCollection('Documents\Project');
+        $document = $coll->findOne(array('name' => 'Project'));
+        $this->assertEquals('project', $document['type']);
+
+        // Changing database value for DiscriminatorMap field
+        $coll->update(array('name' => 'Project'), array('$set' => array('type' => 'unsupported-type')));
+        
+        // Ensuring it's properly persisted
+        $document = $coll->findOne(array('name' => 'Project'));
+        $this->assertEquals('unsupported-type', $document['type']);
+
+        // This query should raise \Doctrine\ODM\MongoDB\Mapping\HydratorException
+        // because 'unsupported-type' is not an allowed value in @DiscriminatorMap
+        $document = $this->dm->find('Documents\Project', $id);
+        $this->assertInstanceOf('Documents\Project', $document);
+    }
 }

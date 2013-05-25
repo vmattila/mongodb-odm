@@ -145,6 +145,19 @@ class IndexesTest extends \Doctrine\ODM\MongoDB\Tests\BaseTest
         $this->assertTrue(isset($indexes[1]['options']['unique']));
         $this->assertEquals(true, $indexes[1]['options']['unique']);
         $this->assertEquals('test', $indexes[0]['options']['name']);
+        
+        $class = $this->dm->getClassMetadata(__NAMESPACE__.'\ExpireAfterSecondsFieldIndex');
+        $indexes = $class->getIndexes();
+        $this->assertTrue(isset($indexes[0]['keys']['expire']));
+        $this->assertEquals(1, $indexes[0]['keys']['expire']);
+        $this->assertEquals(3600, $indexes[0]['options']['expireAfterSeconds']);
+    }
+    
+    public function testExpireAfterSecondsIsSetCorrectly() {
+        $expire = new ExpireAfterSecondsFieldIndex();
+        $expire->expire = new \DateTime();
+        $this->dm->persist($expire);
+        $this->dm->
     }
 
     /**
@@ -186,6 +199,8 @@ class IndexesTest extends \Doctrine\ODM\MongoDB\Tests\BaseTest
     {
         $this->uniqueTest('MultipleFieldIndexes');
     }
+    
+    public function tearDown() { }
 }
 
 /** @ODM\Document */
@@ -359,4 +374,14 @@ class EmbeddedManyDocumentWithIndexes
 {
     /** @ODM\String @ODM\Index */
     public $name;
+}
+
+/** @ODM\Document */
+class ExpireAfterSecondsFieldIndex
+{
+    /** @ODM\Id */
+    public $id;
+
+    /** @ODM\Date @ODM\Index(options={"expireAfterSeconds"=3600}) */
+    public $expire;
 }
