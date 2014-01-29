@@ -106,4 +106,21 @@ class InheritanceTest extends \Doctrine\ODM\MongoDB\Tests\BaseTest
         $this->assertInstanceOf('Documents\SubProject', $projects[1]);
         $this->assertInstanceOf('Documents\OtherSubProject', $projects[2]);
     }
+
+    /**
+     * @see https://github.com/doctrine/mongodb-odm/issues/788
+     *
+     * @expectedException        Doctrine\ODM\MongoDB\Mapping\MappingException
+     */
+    public function testNotListedSubProjectThrowsException()
+    {
+        $developer = new \Documents\Developer('vmattila');
+
+        $projects = $developer->getProjects();
+
+        $projects->add(new \Documents\NotListedSubProject('Sub Project not listed in DiscriminatorMap'));
+
+        $this->dm->persist($developer);
+        $this->dm->flush();
+    }
 }
